@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s", datefmt="[%a %b %d %H:%M:%S %Y]", level=logging.INFO)
-egg_interval = 16  # global variables bad gahhhh
+
 
 class EggSpammer(commands.Cog):
 
@@ -207,11 +207,10 @@ class EggSpammer(commands.Cog):
             await asyncio.sleep(5)  # Just in case this is abused
             self.reaction_cooldown.remove(member.id)
 
-    @tasks.loop(seconds=egg_interval)
+    @tasks.loop(seconds=random.randint(20, 35))
     async def send_egg_message(self):
 
-        global egg_interval
-        egg_interval = random.randint(20, 35)
+        self.send_egg_message.change_interval(seconds=random.randint(20, 35))
         category_id = os.getenv("CATEGORY_ID")
         guild = self.bot.current_guild
 
