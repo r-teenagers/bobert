@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s", datefmt="[%a %b %d %H:%M:%S %Y]", level=logging.INFO)
-
+egg_interval = 16  # global variables bad gahhhh
 
 class EggSpammer(commands.Cog):
 
@@ -21,6 +21,7 @@ class EggSpammer(commands.Cog):
 
         self.bot = bot
         self.reaction_cooldown = []
+        self.egg_interval = 16
         self.mod_channel = self.bot.get_channel(int(os.getenv("MOD_CHANNEL")))
         if self.bot.config_set:
             self.send_egg_message.start()
@@ -111,7 +112,7 @@ class EggSpammer(commands.Cog):
 
         data["blacklisted_users"].append(uid)
 
-        with open("config.json", w) as config:
+        with open("config.json", "w") as config:
             json.dump(data, config)
 
     # -- File handler & message update --
@@ -206,9 +207,11 @@ class EggSpammer(commands.Cog):
             await asyncio.sleep(5)  # Just in case this is abused
             self.reaction_cooldown.remove(member.id)
 
-    @tasks.loop(seconds=random.randint(15, 25))
+    @tasks.loop(seconds=egg_interval)
     async def send_egg_message(self):
 
+        global egg_interval
+        egg_interval = random.randint(20, 35)
         category_id = os.getenv("CATEGORY_ID")
         guild = self.bot.current_guild
 
