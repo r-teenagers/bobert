@@ -87,7 +87,7 @@ class EggSpammer(commands.Cog):
         except:
             await ctx.send(f"{ctx.author.mention} Couldn't send you a DM! Please open your DMs.", delete_after=2)
 
-    @score.error()
+    @score.error
     async def score_error(self, ctx, error):
         if isinstance(error, commands.CommandOnCooldown):
             return
