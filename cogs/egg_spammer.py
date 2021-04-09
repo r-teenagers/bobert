@@ -84,9 +84,14 @@ class EggSpammer(commands.Cog):
 
         try:
             scorestring = f"{score} eggs!" if score != 0 else f"{score} eggs :("
-            await ctx.author.send(f"You have found {scorestring}", delete_after=2)
+            await ctx.author.send(f"You have found {scorestring}")
         except:
             await ctx.send(f"{ctx.author.mention} Couldn't send you a DM! Please open your DMs.", delete_after=2)
+
+        try:
+            await ctx.message.delete()
+        except:
+            logging.warning("Missing manage messages permission!")
 
     @score.error
     async def score_error(self, ctx, error):
@@ -94,26 +99,35 @@ class EggSpammer(commands.Cog):
             return
 
     @commands.command()
-    async def blacklist(self, ctx, user = typing.Union[discord.Member, str, None]):
+    async def blacklist(self, ctx, userid = None):
 
         if int(os.getenv("MOD_ROLE")) not in [role.id for role in ctx.author.roles]:
             return
 
-        if user is None:
+        if userid is None:
             return await ctx.send("Please provide a proper user!")
 
         with open("config.json") as config:
             data = json.load(config)
 
         try:
-            uid = user.id if isinstance(user, discord.Member) else int(user)
+            uid = int(userid)
         except ValueError:
             return await ctx.send("Please provide a valid user id!")
 
         data["blacklisted_users"].append(uid)
+        self.bot.blacklisted_users.append(uid)
 
         with open("config.json", "w") as config:
             json.dump(data, config)
+
+        embed = discord.Embed(title="You have been blacklisted",
+                              description="You have been blocked from participating from the egg event. This bot will"
+                                          "now ignore your reactions.",
+                              timestamp=datetime.datetime.utcnow())
+
+        await self.bot.current_guild.get_member(uid).send(embed=embed)
+        await ctx.send(f"User <@{uid}> blacklisted")
 
     # -- File handler & message update --
     def update_statistics_file(self, user, entry):
@@ -157,7 +171,7 @@ class EggSpammer(commands.Cog):
             except AttributeError:
                 user_name = str(user)
 
-            if user_name is not None:
+            if user_name is not None and int(user) not in self.bot.blacklisted_users:
                 description += f"{index}. {user_name}: {score}" + newline
                 index += 1
             if index == 11:
@@ -217,16 +231,21 @@ class EggSpammer(commands.Cog):
         allowed_category = discord.utils.get(guild.categories, id=int(category_id))
         allowed_channels = allowed_category.text_channels
 
-        egg_msg = await random.choice(allowed_channels).send("🥚")
-        await egg_msg.add_reaction("🥚")
+        try:
+            egg_msg = await random.choice(allowed_channels).send("🥚")
+            await egg_msg.add_reaction("🥚")
+        except Exception as e:
+            logging.error(f"Something went wrong while sending egg message: {e}")
+            return
 
-        sent_date = datetime.datetime.utcnow()
-        delay = sent_date - egg_msg.created_at
         logging.info(f"Sent egg to {egg_msg.channel}")
 
         def check(reaction, user):
-            return str(reaction.emoji) == "🥚" and reaction.message == egg_msg and not user.bot and any(role in [r.id for r in user.roles] for role in self.bot.teams)
-
+            return str(reaction.emoji) == "🥚" \
+                   and reaction.message == egg_msg \
+                   and not user.bot \
+                   and any(role in [r.id for r in user.roles] for role in self.bot.teams) \
+                   and user.id not in self.bot.blacklisted_users
         try:
             reaction, user = await self.bot.wait_for('reaction_add', timeout=10.0, check=check)
 
@@ -241,13 +260,14 @@ class EggSpammer(commands.Cog):
 
         else:
 
-            timedelta = datetime.datetime.utcnow() - sent_date
-            formatted_timedelta = round(timedelta.total_seconds() * 1000)
+            timedelta = datetime.datetime.utcnow() - egg_msg.created_at
+            latency = self.bot.latency if self.bot.latency < 300 else 200
+            formatted_timedelta = round((timedelta.total_seconds() - latency) * 1000)
             conf_message = await egg_msg.channel.send(f"{user.mention} got the egg in {formatted_timedelta} ms!")
 
-            if formatted_timedelta < 300:  # I don't know if this is realistic but let's see?
+            if formatted_timedelta < 500:  # I don't know if this is realistic but let's see?
 
-                self.mod_channel.send(f"{str(user)} ({user.id}) got an egg in {formatted_timedelta} ms. Possibly a bot")
+                await self.mod_channel.send(f"{str(user)} ({user.id}) got an egg in {formatted_timedelta} ms. Possibly a bot")
 
             logging.info(f"{user.mention} got the egg in {round(timedelta.total_seconds() * 1000)} ms!")
 
