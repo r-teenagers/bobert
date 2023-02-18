@@ -283,6 +283,6 @@ class EggSpammer(commands.Cog):
             await self.update_leaderboard_message(user)
 
 
-def setup(bot):
+async def setup(bot):
     bot.add_cog(EggSpammer(bot))
 
