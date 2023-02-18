@@ -30,7 +30,7 @@ class EggSpammer(commands.Cog):
     # --- commands ---
 
     @commands.command()
-    async def start(self, ctx, channel: discord.TextChannel):
+    async def start(self, ctx):
 
         if ctx.author.id != int(os.getenv("AUTHORIZED_USER")):
             return
@@ -49,15 +49,15 @@ class EggSpammer(commands.Cog):
             score_embed.add_field(name=role.name, value="0")
             reaction_embed.add_field(name=role.name, value=f"Number of members: {len(role.members)}")
 
-        score_msg = await channel.send(embed=score_embed)
-        role_msg = await channel.send(embed=reaction_embed)
+        score_msg = await ctx.channel.send(embed=score_embed)
+        role_msg = await ctx.channel.send(embed=reaction_embed)
 
     
         await role_msg.add_reaction("🥚")
 
-        self.bot.scoreboard_channel = channel
+        self.bot.scoreboard_channel = ctx.channel
         self.bot.scoreboard_message = score_msg
-        self.bot.react_role_channel = channel
+        self.bot.react_role_channel = ctx.channel
         self.bot.react_role_message = role_msg
 
         with open("config.json") as config:
@@ -261,7 +261,7 @@ class EggSpammer(commands.Cog):
                 logging.warning("Unable to delete egg message")
 
         else:
-            timezone = pytz.timezone("Asia/Kolkata")
+            timezone = pytz.timezone(os.getenv("TIMEZONE"))
             timedelta = timestamp = timezone.localize(datetime.datetime.now()) - egg_msg.created_at
             latency = self.bot.latency if self.bot.latency < 300 else 200
             formatted_timedelta = round((timedelta.total_seconds() - latency) * 1000)
