@@ -53,6 +53,6 @@ async def on_ready():  # This event fires a lot. We don't really want to call lo
 async def load_cogs():
     for filename in os.listdir("./cogs"):
         if filename.endswith(".py"):
-            bot.load_extension(f"cogs.{filename[:-3]}")
+            await bot.load_extension(f"cogs.{filename[:-3]}")
 
 bot.run(os.getenv("TOKEN"))
