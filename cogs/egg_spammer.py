@@ -6,6 +6,7 @@ import asyncio
 import os
 import datetime
 import typing
+import pytz
 
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
@@ -29,7 +30,7 @@ class EggSpammer(commands.Cog):
     # --- commands ---
 
     @commands.command()
-    async def initialize(self, ctx, channel: discord.TextChannel):
+    async def start(self, ctx, channel: discord.TextChannel):
 
         if ctx.author.id != int(os.getenv("AUTHORIZED_USER")):
             return
@@ -38,7 +39,7 @@ class EggSpammer(commands.Cog):
             return await ctx.send("Could not initialize! Variables already set. Please edit leaderboard.json "
                                   "to not have message channels and react role channels already set.")
 
-        score_embed = discord.Embed(title="Scoreboards")
+        score_embed = discord.Embed(title="Scoreboards", description= None)
         reaction_embed = discord.Embed(title="Grab your team role here!",
                                        description="Teams are randomized for balance.")
 
@@ -51,6 +52,7 @@ class EggSpammer(commands.Cog):
         score_msg = await channel.send(embed=score_embed)
         role_msg = await channel.send(embed=reaction_embed)
 
+    
         await role_msg.add_reaction("🥚")
 
         self.bot.scoreboard_channel = channel
@@ -259,8 +261,8 @@ class EggSpammer(commands.Cog):
                 logging.warning("Unable to delete egg message")
 
         else:
-
-            timedelta = datetime.datetime.utcnow() - egg_msg.created_at
+            timezone = pytz.timezone("Asia/Kolkata")
+            timedelta = timestamp = timezone.localize(datetime.datetime.now()) - egg_msg.created_at
             latency = self.bot.latency if self.bot.latency < 300 else 200
             formatted_timedelta = round((timedelta.total_seconds() - latency) * 1000)
             conf_message = await egg_msg.channel.send(f"{user.mention} got the egg in {formatted_timedelta} ms!")
@@ -284,5 +286,5 @@ class EggSpammer(commands.Cog):
 
 
 async def setup(bot):
-    bot.add_cog(EggSpammer(bot))
+    await bot.add_cog(EggSpammer(bot))
 
