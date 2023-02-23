@@ -37,8 +37,8 @@ Where everything should be ids. For example, CATEGORY_ID=12083246426462 or whate
 Where teams is a list of integers. Those integers _must_ be valid role ids. Don't touch set.
 Blacklisted users is a list of ids you can modify with `<prefix>blacklist [user id]`.
 
-TEAMS MUST BE INSERTED BEFOREHAND. mainly because i'm lazy. after team ids are set, run `<prefix>initialize [channel]`
-somewhere. The bot will then send the scoreboard & role messages in the channel and save them.
+Use the set command to set the teams with their IDs. after team IDs are set, run `<prefix>initialize [channel]`
+somewhere. The bot will then send the scoreboard and role messages in the channel and save them.
 
 Smart, I know.
 
