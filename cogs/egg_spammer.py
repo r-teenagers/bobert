@@ -1,3 +1,4 @@
+
 import discord
 import json
 import logging
@@ -5,7 +6,6 @@ import random
 import asyncio
 import os
 import datetime
-import typing
 import pytz
 
 from discord.ext import commands, tasks
@@ -30,7 +30,7 @@ class EggSpammer(commands.Cog):
     # --- commands ---
 
     @commands.command()
-    async def start(self, ctx):
+    async def start(self, ctx, channel):
 
         if ctx.author.id != int(os.getenv("AUTHORIZED_USER")):
             return
@@ -38,6 +38,8 @@ class EggSpammer(commands.Cog):
         if self.bot.config_set:
             return await ctx.send("Could not initialize! Variables already set. Please edit leaderboard.json "
                                   "to not have message channels and react role channels already set.")
+
+        channel = self.bot.get_channel(int(channel))
 
         score_embed = discord.Embed(title="Scoreboards", description= None)
         reaction_embed = discord.Embed(title="Grab your team role here!",
@@ -49,15 +51,14 @@ class EggSpammer(commands.Cog):
             score_embed.add_field(name=role.name, value="0")
             reaction_embed.add_field(name=role.name, value=f"Number of members: {len(role.members)}")
 
-        score_msg = await ctx.channel.send(embed=score_embed)
-        role_msg = await ctx.channel.send(embed=reaction_embed)
+        score_msg = await channel.send(embed=score_embed)
+        role_msg = await channel.send(embed=reaction_embed)
 
-    
         await role_msg.add_reaction("🥚")
 
-        self.bot.scoreboard_channel = ctx.channel
+        self.bot.scoreboard_channel = channel
         self.bot.scoreboard_message = score_msg
-        self.bot.react_role_channel = ctx.channel
+        self.bot.react_role_channel = channel
         self.bot.react_role_message = role_msg
 
         with open("config.json") as config:
@@ -71,6 +72,14 @@ class EggSpammer(commands.Cog):
             json.dump(data, config)
 
         self.send_egg_message.start()
+
+    @commands.command()
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def ping(self, ctx):
+        if discord.utils.get(ctx.guild.roles, id=int(os.getenv("MOD_ROLE"))) not in ctx.author.roles:
+            return
+
+        await ctx.send('Pong! My ping is {0}.'.format(round(self.bot.latency)))
 
     @commands.command()
     @commands.cooldown(1, 5, commands.BucketType.user)
@@ -132,7 +141,7 @@ class EggSpammer(commands.Cog):
         await ctx.send(f"User <@{uid}> blacklisted")
 
     # -- File handler & message update --
-    def update_statistics_file(self, user, entry):
+    def update_statistics_file(self, user, entry, cracked):
 
         with open("leaderboard.json") as leaderboard:
             data = json.load(leaderboard)
@@ -145,11 +154,27 @@ class EggSpammer(commands.Cog):
         if team is None:
             return
 
-        data["teams"][str(team)] += 1  # This can't not exist
+        # Add an entry for the user's role to avoid team switching for balance
+        # This is a mess, but I don't want to restructure the lb while it's running
+        if str(entry) not in data["roles"]:
+            data["roles"][str(entry)] = team
+            logging.info(f"{entry}'s role was not previously saved, added to leaderboard.json")
+
+        delta = -1 if cracked else 1
+
+        # Individual score can still be negative
         if str(entry) not in data["users"]:
-            data["users"][str(entry)] = 1
+            data["users"][str(entry)] = delta
         else:
-            data["users"][str(entry)] += 1
+            data["users"][str(entry)] += delta
+
+        # Don't subtract from team score if user's score is negative - this should prevent throwing
+        personal_eggs = data["users"][str(entry)]
+        should_affect_team = personal_eggs >= 0 or delta == 1
+        if should_affect_team:
+            data["teams"][str(team)] += delta  # This can't not exist
+        else:
+            logging.info(f"User {entry} has {personal_eggs}, not subtracting from team score")
 
         with open("leaderboard.json", "w") as config:
             json.dump(data, config)
@@ -162,7 +187,7 @@ class EggSpammer(commands.Cog):
 
         # I'm so sorry
         sorted_leaderboard = {k: v for k, v in reversed(sorted(data["users"].items(), key=lambda item: item[1]))}
-        description = "```py\n"
+        description = "Type `b!score` to check how many eggs you've collected!\n```py\n"
         newline = "\n"
         index = 1
 
@@ -209,12 +234,24 @@ class EggSpammer(commands.Cog):
         member = self.bot.current_guild.get_member(payload.user_id)
 
         if payload.message_id == self.bot.react_role_message.id:  # This handles giving team roles
+            # Load the leaderboard to avoid team switching when already assigned
+            with open("leaderboard.json") as leaderboard:
+                data = json.load(leaderboard)
 
             for role in [r.id for r in member.roles]:
                 if role in self.bot.teams:
                     return  # User already has role
 
-            role_obj = discord.utils.get(self.bot.current_guild.roles, id=random.choice(self.bot.teams))
+            # Use pre-stored role id if it exists, else generate randomly
+            if str(payload.user_id) in data["roles"]:
+                role_id = data["roles"][str(payload.user_id)]
+                logging.info(f"Using pre-stored role for {str(member)}")
+            else:
+                role_id = random.choice(self.bot.teams)
+                data["roles"][str(payload.user_id)] = role_id
+                logging.info(f"Generating random role for {str(member)}")
+
+            role_obj = discord.utils.get(self.bot.current_guild.roles, id=role_id)
             await member.add_roles(role_obj)
             await self.update_role_message()
             logging.info(f"Added role to {str(member)}")
@@ -225,29 +262,35 @@ class EggSpammer(commands.Cog):
 
     @tasks.loop(seconds=random.randint(20, 35))
     async def send_egg_message(self):
-
         self.send_egg_message.change_interval(seconds=random.randint(20, 35))
         category_id = os.getenv("CATEGORY_ID")
+        blacklisted_channels = self.bot.blacklisted_channels
         guild = self.bot.current_guild
 
         allowed_category = discord.utils.get(guild.categories, id=int(category_id))
         allowed_channels = allowed_category.text_channels
+        allowed_channels = list(filter(lambda channel: channel.id not in blacklisted_channels, allowed_channels))
+
+        egg_channel = random.choice(allowed_channels)
+
+        egg_cracked = random.randrange(0, 100) < 30
+        eggmoji = "🥚" if not egg_cracked else "🐣"
 
         try:
-            egg_msg = await random.choice(allowed_channels).send("🥚")
-            await egg_msg.add_reaction("🥚")
+            egg_msg = await egg_channel.send(eggmoji)
+            await egg_msg.add_reaction(eggmoji)
         except Exception as e:
             logging.error(f"Something went wrong while sending egg message: {e}")
             return
 
-        logging.info(f"Sent egg to {egg_msg.channel}")
+        logging.info(f"Sent {'hatched ' if egg_cracked else ''}egg to {egg_msg.channel}")
 
         def check(reaction, user):
-            return str(reaction.emoji) == "🥚" \
-                   and reaction.message == egg_msg \
-                   and not user.bot \
-                   and any(role in [r.id for r in user.roles] for role in self.bot.teams) \
-                   and user.id not in self.bot.blacklisted_users
+            return str(reaction.emoji) == eggmoji \
+                and reaction.message == egg_msg \
+                and not user.bot \
+                and any(role in [r.id for r in user.roles] for role in self.bot.teams) \
+                and user.id not in self.bot.blacklisted_users
         try:
             reaction, user = await self.bot.wait_for('reaction_add', timeout=10.0, check=check)
 
@@ -262,13 +305,16 @@ class EggSpammer(commands.Cog):
 
         else:
             timezone = pytz.timezone(os.getenv("TIMEZONE"))
-            timedelta = timestamp = timezone.localize(datetime.datetime.now()) - egg_msg.created_at
+            timedelta = timezone.localize(datetime.datetime.now()) - egg_msg.created_at
             latency = self.bot.latency if self.bot.latency < 300 else 200
             formatted_timedelta = round((timedelta.total_seconds() - latency) * 1000)
-            conf_message = await egg_msg.channel.send(f"{user.mention} got the egg in {formatted_timedelta} ms!")
+
+            if not egg_cracked:
+                result_msg = await egg_channel.send(content=f"{user.mention} got the egg in {formatted_timedelta} ms!")
+            else:
+                result_msg = await egg_channel.send(content=f"Uh oh, that egg hatched. {user.mention} lost a point!")
 
             if formatted_timedelta < 500:  # I don't know if this is realistic but let's see?
-
                 await self.mod_channel.send(f"{str(user)} ({user.id}) got an egg in {formatted_timedelta} ms. Possibly a bot")
 
             logging.info(f"{user.mention} got the egg in {round(timedelta.total_seconds() * 1000)} ms!")
@@ -277,14 +323,13 @@ class EggSpammer(commands.Cog):
 
             try:
                 await egg_msg.delete()
-                await conf_message.delete()
+                await result_msg.delete()
             except:
                 logging.warning("Unable to delete egg message")
 
-            self.update_statistics_file(user, user.id)
+            self.update_statistics_file(user, user.id, egg_cracked)
             await self.update_leaderboard_message(user)
 
 
 async def setup(bot):
     await bot.add_cog(EggSpammer(bot))
-
