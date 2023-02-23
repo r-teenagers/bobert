@@ -28,6 +28,22 @@ class EggSpammer(commands.Cog):
             self.send_egg_message.start()
 
     # --- commands ---
+    
+    @commands.command()
+    async def set(self, ctx, *args):
+        
+        if ctx.author.id != int(os.getenv("AUTHORIZED_USER")):
+            return
+
+        with open("config.json") as config:
+            data = json.load(config)
+
+        team_count = 0
+        for i in args:
+            data["teams"][team_count] = i
+            team_count += 1
+
+        return await ctx.send("Teams set, use `b!start` to initialize the bot.")
 
     @commands.command()
     async def start(self, ctx, channel):
