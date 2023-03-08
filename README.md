@@ -2,6 +2,10 @@
 
 This is a very very simple bot that spams eggs. First one to react to an egg it has sent gets one point. Simple enough.
 
+### Development:
+Run `pipenv install` to install all dependencies from the Pipfile to a virtual environment.
+Then run `pipenv run python main.py` to run the bot or `pipenv shell` to enter the virtual environment.
+
 ### Configuration:
 
 You must have a `.env` file in the root directory. Its format is:
