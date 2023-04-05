@@ -48,7 +48,7 @@ export class ReadyListener extends Listener {
 			const randomIndex = Math.random() * (items.length - 1);
 			const item = items[randomIndex];
 
-			let message = await channel.send(item.emoji);
+			const message = await channel.send(item.emoji);
 
 			if (item.auto_react !== false) {
 				message.react(item.response);

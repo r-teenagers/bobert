@@ -95,5 +95,5 @@ type BobertConfig = {
 	};
 };
 
-const isBlankOrUndefined = (property: any): boolean =>
+const isBlankOrUndefined = (property: string | null): boolean =>
 	!property || property === "";
