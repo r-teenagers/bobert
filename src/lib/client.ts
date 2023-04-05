@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { container, SapphireClient } from "@sapphire/framework";
-import { CategoryChannel, Channel, GatewayIntentBits, Guild } from "discord.js";
+import { GatewayIntentBits } from "discord.js";
 import { readFileSync } from "fs";
 
 import * as toml from "toml";
