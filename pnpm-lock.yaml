@@ -19,6 +19,9 @@ dependencies:
   dotenv:
     specifier: ^16.0.3
     version: 16.0.3
+  toml:
+    specifier: ^3.0.0
+    version: 3.0.0
 
 devDependencies:
   prisma:
@@ -489,6 +492,10 @@ packages:
     dependencies:
       '@tokenizer/token': 0.3.0
       ieee754: 1.2.1
+    dev: false
+
+  /toml@3.0.0:
+    resolution: {integrity: sha512-y/mWCZinnvxjTKYhJ+pYxwD0mRLVvOtdS2Awbgxln6iEnt4rk0yBxeSBHkGJcPucRiG0e55mwWp+g/05rsrd6w==}
     dev: false
 
   /ts-mixer@6.0.3:

@@ -3,6 +3,6 @@ dotenv.config();
 
 import { BobertClient } from "./lib/client";
 
-const bot = new BobertClient();
+const bot = new BobertClient("./config.toml");
 
-bot.login(process.env.TOKEN);
+bot.login();

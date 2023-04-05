@@ -1,0 +1,30 @@
+[bot]
+token = ""
+ # The server in which to run the event
+guild = "143821685726904320"
+# The category in which to send scoreboard messages
+category = "367008542278025216"
+# The channel in which to send the scoreboard/team list
+scoreboard_channel = "319283301334384640"
+
+[event]
+ # Snowflakes of each team role for the event
+teams = [ "682428165523767422", "682428290627272725" ]
+
+[[event.items]]
+name = "Egg"
+emoji = "🥚" # Emoji to send on the collectible message
+response = "🥚" # Emoji to react with
+net_score = 1 # Points to add to user/team score - negative removes points
+# whether to react immediately to the messages
+# False requires manual, slower reaction by the user. Defaults to true
+auto_react = true
+# chance for this item to appear - forms a ratio
+# in this case, the ratio of eggs to hatched eggs is 5:1
+weight = 5
+
+[[event.items]]
+name = "Hatched Egg"
+emoji = "🐣"
+response = "🐣"
+net_score = -1

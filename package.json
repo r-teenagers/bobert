@@ -19,7 +19,8 @@
     "@sapphire/pieces": "^3.6.1",
     "@types/node": "^18.15.11",
     "discord.js": "^14.9.0",
-    "dotenv": "^16.0.3"
+    "dotenv": "^16.0.3",
+    "toml": "^3.0.0"
   },
   "devDependencies": {
     "prisma": "^4.12.0",
