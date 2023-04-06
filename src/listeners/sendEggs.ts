@@ -99,8 +99,11 @@ export class SendEggsListener extends Listener {
 			message
 				.awaitReactions({ filter: reactionFilter, max: 1, time: 10_000 })
 				.then(async (reactions: Collection<string, MessageReaction>) => {
+					// we don't want to clutter the channels
 					await message.delete();
 
+					// for some reason this gets called even if the time limit is reached
+					// this if statement runs if no USERS reacted (item missed)
 					if (reactions.size === 0) {
 						this.container.logger.info(
 							`${item.name} missed in #${channel.name} (${channel.id}).`,

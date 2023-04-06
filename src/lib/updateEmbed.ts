@@ -30,14 +30,17 @@ export default async (client: BobertClient) => {
 			include: { _count: { select: { players: true } } },
 		});
 
-		const teamScore = (await container.database.player.aggregate({
-			where: {
-				teamSnowflake: teamId,
-			},
-			_sum: {
-				score: true,
-			},
-		}))._sum.score || 0;
+		const teamScore =
+			(
+				await container.database.player.aggregate({
+					where: {
+						teamSnowflake: teamId,
+					},
+					_sum: {
+						score: true,
+					},
+				})
+			)._sum.score || 0;
 
 		embed.addFields({
 			name: role!.name,
