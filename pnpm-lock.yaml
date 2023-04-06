@@ -10,6 +10,9 @@ dependencies:
   '@sapphire/pieces':
     specifier: ^3.6.1
     version: 3.6.1
+  '@sapphire/plugin-logger':
+    specifier: ^3.0.2
+    version: 3.0.2
   '@types/node':
     specifier: ^18.15.11
     version: 18.15.11
@@ -211,6 +214,15 @@ packages:
       tslib: 2.5.0
     dev: false
 
+  /@sapphire/plugin-logger@3.0.2:
+    resolution: {integrity: sha512-d1RruPjgyYALlVKCV0NsAyR5ztF4N2MDqFGUW/SsMe913yL6BHZfz6nEOMMTC1uyjCaoP/7PfTuFLoZ5oyj5AA==}
+    engines: {node: '>=v14.0.0', npm: '>=7.0.0'}
+    dependencies:
+      '@sapphire/timestamp': 1.0.1
+      colorette: 2.0.19
+      tslib: 2.5.0
+    dev: false
+
   /@sapphire/ratelimits@2.4.6:
     resolution: {integrity: sha512-E8ZogD+gtXw/iAFuyd42ZzUcYzOC3qGXZFOjU12o0cSYWObh7kQEqkS62BB0hMXy+GJH0X2+kqgMklME8EhWUg==}
     engines: {node: '>=v14.0.0', npm: '>=7.0.0'}
@@ -241,6 +253,11 @@ packages:
       tslib: 2.5.0
     dev: false
 
+  /@sapphire/timestamp@1.0.1:
+    resolution: {integrity: sha512-uLg+rBFuBiaQY/pFGDDzZSOH2cfv4ONIB7zQGNuRCTpYKBW/iIhRBIZjJZyn8NVkXQhVi+Q94DI4i6gDhYVs7w==}
+    engines: {node: '>=v14.0.0', npm: '>=7.0.0'}
+    dev: false
+
   /@sapphire/utilities@3.11.0:
     resolution: {integrity: sha512-ich7J+329UTEgWxgk8b871rMhbFW/hvXdabdiKaUKd6g10eIMkIakWf+EGkDQsiDSiebIXll9TIPPmWtN3cVSw==}
     engines: {node: '>=v14.0.0', npm: '>=7.0.0'}
@@ -265,6 +282,10 @@ packages:
     engines: {node: '>=10.16.0'}
     dependencies:
       streamsearch: 1.1.0
+    dev: false
+
+  /colorette@2.0.19:
+    resolution: {integrity: sha512-3tlv/dIP7FWvj3BsbHrGLJ6l/oKh1O3TcgBqMn+yyCagOxc23fyzDS6HypQbgxWbkpDnf52p1LuR4eWDQ/K9WQ==}
     dev: false
 
   /cross-spawn@7.0.3:

@@ -1,32 +1,29 @@
 import { PrismaClient } from "@prisma/client";
-import { LogLevel, SapphireClient, container } from "@sapphire/framework";
-import { CategoryChannel, GatewayIntentBits, Message } from "discord.js";
+import { SapphireClient, container } from "@sapphire/framework";
+import {
+	CategoryChannel,
+	ClientOptions,
+	GatewayIntentBits,
+	Message,
+} from "discord.js";
 import { readFileSync } from "fs";
+
+import { BobertConfig } from "./config";
 
 import * as toml from "toml";
 
 export class BobertClient extends SapphireClient {
-	public constructor(configPath: string) {
+	public constructor(options: ClientOptions, configPath: string) {
 		super({
-			intents: [
-				GatewayIntentBits.Guilds,
-				GatewayIntentBits.GuildMessageReactions,
-			],
+			...options,
 			loadDefaultErrorListeners: false,
-			logger: {
-				level:
-					process.env.NODE_ENV === "production"
-						? LogLevel.Info
-						: LogLevel.Debug,
-			},
 		});
 
 		this.setupConfig(configPath);
 	}
 
-	public override async login(token: string) {
+	public override async login() {
 		container.database = new PrismaClient();
-		console.log(container.config);
 		return super.login(container.config.bot.token);
 	}
 
@@ -73,27 +70,6 @@ declare module "@sapphire/pieces" {
 		scoreboard_message_cache: Message;
 	}
 }
-
-type BobertConfig = {
-	bot: {
-		token: string;
-		guild: string;
-		category: string;
-		blacklisted_channels: string[];
-		scoreboard_channel: string;
-	};
-	event: {
-		teams: string[];
-		items: {
-			name: string;
-			emoji: string;
-			response: string;
-			net_score: number;
-			auto_react: boolean | null;
-			weight: number | null;
-		}[];
-	};
-};
 
 const isBlankOrUndefined = (property: string | null): boolean =>
 	!property || property === "";

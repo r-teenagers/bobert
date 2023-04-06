@@ -6,3 +6,6 @@ node_modules/
 dist
 
 config.toml
+
+*/*.db
+*/*.db-journal
