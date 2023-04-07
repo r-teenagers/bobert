@@ -118,6 +118,8 @@ const generateTeamsEmbed = async (guild: Guild): Promise<EmbedBuilder> => {
 	for (const teamId of container.config.event.teams) {
 		const role = await guild.roles.fetch(teamId);
 
+		if (!role) continue;
+
 		const team = await container.database.team.upsert({
 			where: { snowflake: teamId },
 			update: {}, // an empty update object means this will just create it
@@ -128,7 +130,7 @@ const generateTeamsEmbed = async (guild: Guild): Promise<EmbedBuilder> => {
 		});
 
 		embed.addFields({
-			name: role!.name,
+			name: role.name,
 			value: `Number of players: ${team?._count.players}`,
 			inline: true,
 		});
