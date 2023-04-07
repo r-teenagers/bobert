@@ -3,4 +3,4 @@ export const formattedPointsString = (points: number): string => {
 	if (points === 1) return "Point";
 
 	return "Points";
-}
+};

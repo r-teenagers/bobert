@@ -4,6 +4,7 @@ import updateEmbed from "../lib/updateEmbed";
 
 import { Listener } from "@sapphire/framework";
 import {
+	CategoryChannel,
 	ChannelType,
 	Collection,
 	MessageReaction,
@@ -40,126 +41,131 @@ export class SendEggsListener extends Listener {
 
 		this.container.category_cache = category;
 
-		// This is recursive, so it's easiest to define it here
-		const sendEgg = async () => {
-			// The selected channel needs to be a TextChannel that is NOT blacklisted
-			// it would probably work in voice text etc., but it's easier this way
-			const channel: TextChannel = client.channels.cache
-				.filter(
-					(c) =>
-						c.type === ChannelType.GuildText &&
-						c.parent?.id === gameCategoryId &&
-						!blacklistedChannels?.includes(c.id),
-				)
-				.random() as TextChannel; // TypeScript apparently isn't smart enough to infer this
+		this.sendEgg(client, gameCategoryId, blacklistedChannels, items);
+	}
 
-			// JS has no builtin random choice function for arrays.
-			// ridiculous.
-			const item = this.weightedRandom(items);
+	private async sendEgg(
+		client: BobertClient,
+		gameCategoryId: string,
+		blacklistedChannels: string[] | null,
+		items: BobertItem[],
+	) {
+		// The selected channel needs to be a TextChannel that is NOT blacklisted
+		// it would probably work in voice text etc., but it's easier this way
+		const channel: TextChannel = client.channels.cache
+			.filter(
+				(c) =>
+					c.type === ChannelType.GuildText &&
+					c.parent?.id === gameCategoryId &&
+					!blacklistedChannels?.includes(c.id),
+			)
+			.random() as TextChannel; // TypeScript apparently isn't smart enough to infer this
 
-			this.container.logger.debug(
-				`Selected item ${JSON.stringify(item, null, 2)}`,
-			);
+		// JS has no builtin random choice function for arrays.
+		// ridiculous.
+		const item = this.weightedRandom(items);
 
-			const message = await channel.send(item.emoji);
+		this.container.logger.debug(
+			`Selected item ${JSON.stringify(item, null, 2)}`,
+		);
 
-			// auto reaction should default to true!
-			if (item.auto_react !== false) {
-				message.react(item.response);
-			}
+		const message = await channel.send(item.emoji);
 
-			this.container.logger.info(
-				`Egg sent in #${channel.name} (${channel.id})!`,
-			);
+		// auto reaction should default to true!
+		if (item.auto_react !== false) {
+			message.react(item.response);
+		}
 
-			// filter is defined here because it's dynamic based on the item response
-			const reactionFilter = async (
-				reaction: MessageReaction,
-				user: User,
-			): Promise<boolean> => {
-				if (user.bot) return false;
-				if (reaction.emoji.name !== item.response) return false;
+		this.container.logger.info(`Egg sent in #${channel.name} (${channel.id})!`);
 
-				const prisma = this.container.database;
-				const player = await prisma.player.findUnique({
+		// filter is defined here because it's dynamic based on the item response
+		const reactionFilter = async (
+			reaction: MessageReaction,
+			user: User,
+		): Promise<boolean> => {
+			if (user.bot) return false;
+			if (reaction.emoji.name !== item.response) return false;
+
+			const prisma = this.container.database;
+			const player = await prisma.player.findUnique({
+				where: {
+					snowflake: user.id,
+				},
+			});
+
+			// if the player isn't in the database, they don't have a team yet
+			if (!player || player.blacklisted) return false;
+
+			return true;
+		};
+
+		/* ----------------
+			  REACTION STAGE
+			 ---------------- */
+
+		message
+			.awaitReactions({ filter: reactionFilter, max: 1, time: 10_000 })
+			.then(async (reactions: Collection<string, MessageReaction>) => {
+				// we don't want to clutter the channels
+				await message.delete();
+
+				// for some reason this gets called even if the time limit is reached
+				// this if statement runs if no USERS reacted (item missed)
+				if (reactions.size === 0) {
+					this.container.logger.info(
+						`${item.name} missed in #${channel.name} (${channel.id}).`,
+					);
+					return;
+				}
+
+				// by this point, we know a player got it (not a bot)
+				// the reactions cache includes the bot's reaction
+				const firstReaction = reactions.first();
+
+				if (!firstReaction) {
+					this.container.logger.error("Couldn't get first reaction!");
+					return;
+				}
+
+				const reactedByUser = firstReaction.users.cache
+					.filter((u) => !u.bot)
+					.first();
+
+				if (!reactedByUser) {
+					this.container.logger.error("Couldn't find the user who reacted!");
+					return;
+				}
+
+				this.container.logger.info(
+					`${item.name} collected by ${reactedByUser?.username}#${reactedByUser?.discriminator} in #${channel.name} (${channel.id}).`,
+				);
+
+				console.log(reactedByUser.id);
+
+				await this.container.database.player.update({
 					where: {
-						snowflake: user.id,
+						snowflake: reactedByUser.id,
+					},
+					data: {
+						score: {
+							increment: item.net_score,
+						},
 					},
 				});
 
-				// if the player isn't in the database, they don't have a team yet
-				if (!player || player.blacklisted) return false;
+				await updateEmbed(client);
+			});
 
-				return true;
-			};
+		// this should generate an interval between 15 seconds and 1:15
+		const timeout = Math.random() * MINUTE + FIFTEEN_SECONDS;
+		this.container.logger.info(
+			`Sending next egg in ${Math.round(timeout) / 1000} seconds.`,
+		);
 
-			/* ----------------
-			    REACTION STAGE
-			   ---------------- */
-
-			message
-				.awaitReactions({ filter: reactionFilter, max: 1, time: 10_000 })
-				.then(async (reactions: Collection<string, MessageReaction>) => {
-					// we don't want to clutter the channels
-					await message.delete();
-
-					// for some reason this gets called even if the time limit is reached
-					// this if statement runs if no USERS reacted (item missed)
-					if (reactions.size === 0) {
-						this.container.logger.info(
-							`${item.name} missed in #${channel.name} (${channel.id}).`,
-						);
-						return;
-					}
-
-					// by this point, we know a player got it (not a bot)
-					// the reactions cache includes the bot's reaction
-					const firstReaction = reactions.first();
-
-					if (!firstReaction) {
-						this.container.logger.error("Couldn't get first reaction!");
-						return;
-					}
-
-					const reactedByUser = firstReaction.users.cache
-						.filter((u) => !u.bot)
-						.first();
-
-					if (!reactedByUser) {
-						this.container.logger.error("Couldn't find the user who reacted!");
-						return;
-					}
-
-					this.container.logger.info(
-						`${item.name} collected by ${reactedByUser?.username}#${reactedByUser?.discriminator} in #${channel.name} (${channel.id}).`,
-					);
-
-					console.log(reactedByUser.id);
-
-					await this.container.database.player.update({
-						where: {
-							snowflake: reactedByUser.id,
-						},
-						data: {
-							score: {
-								increment: item.net_score,
-							},
-						},
-					});
-
-					await updateEmbed(client);
-				});
-
-			// this should generate an interval between 15 seconds and 1:15
-			const timeout = Math.random() * MINUTE + FIFTEEN_SECONDS;
-			this.container.logger.info(
-				`Sending next egg in ${Math.round(timeout) / 1000} seconds.`,
-			);
-
-			setTimeout(sendEgg, timeout);
-		};
-
-		sendEgg();
+		setTimeout(
+			() => this.sendEgg(client, gameCategoryId, blacklistedChannels, items),
+			timeout,
+		);
 	}
 
 	private weightedRandom(items: BobertItem[]): BobertItem {

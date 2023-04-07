@@ -26,11 +26,14 @@ export class JoinTeamHandler extends InteractionHandler {
 		const existingPlayer = await this.container.database.player.findUnique({
 			where: {
 				snowflake: interaction.user.id,
-			}
+			},
 		});
 
 		if (existingPlayer) {
-			await interaction.reply({ content: "You are already on a team!", ephemeral: true });
+			await interaction.reply({
+				content: "You are already on a team!",
+				ephemeral: true,
+			});
 			return;
 		}
 
