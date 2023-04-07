@@ -1,5 +1,7 @@
 import { BobertClient } from "../lib/client";
 import { BobertItem } from "../lib/config";
+import updateEmbed from "../lib/updateEmbed";
+
 import { Listener } from "@sapphire/framework";
 import {
 	ChannelType,
@@ -8,7 +10,6 @@ import {
 	TextChannel,
 	User,
 } from "discord.js";
-import updateEmbed from "../lib/updateEmbed";
 
 const MINUTE = 60000;
 const FIFTEEN_SECONDS = 15000;
@@ -113,16 +114,29 @@ export class SendEggsListener extends Listener {
 
 					// by this point, we know a player got it (not a bot)
 					// the reactions cache includes the bot's reaction
-					const reactedByUser = reactions
-						.first()!
-						.users.cache.filter((u) => !u.bot)
-						.first()!;
+					const firstReaction = reactions.first();
+
+					if (!firstReaction) {
+						this.container.logger.error("Couldn't get first reaction!");
+						return;
+					}
+
+					const reactedByUser = firstReaction.users.cache
+						.filter((u) => !u.bot)
+						.first();
+
+					if (!reactedByUser) {
+						this.container.logger.error("Couldn't find the user who reacted!");
+						return;
+					}
 
 					this.container.logger.info(
 						`${item.name} collected by ${reactedByUser?.username}#${reactedByUser?.discriminator} in #${channel.name} (${channel.id}).`,
 					);
 
-					this.container.database.player.update({
+					console.log(reactedByUser.id);
+
+					await this.container.database.player.update({
 						where: {
 							snowflake: reactedByUser.id,
 						},

@@ -1,7 +1,7 @@
-import { Listener } from "@sapphire/framework";
 import { BobertClient } from "../lib/client";
-import { ChannelType, EmbedBuilder } from "discord.js";
 import updateEmbed from "../lib/updateEmbed";
+import { Listener } from "@sapphire/framework";
+import { ChannelType, EmbedBuilder } from "discord.js";
 
 export class InitializeLeaderboardListener extends Listener {
 	public constructor(context: Listener.Context, options: Listener.Options) {
