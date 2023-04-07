@@ -1,11 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { SapphireClient, container } from "@sapphire/framework";
-import {
-	CategoryChannel,
-	ClientOptions,
-	GatewayIntentBits,
-	Message,
-} from "discord.js";
+import { CategoryChannel, ClientOptions, Message } from "discord.js";
 import { appendFileSync, readFileSync } from "fs";
 
 import { BobertConfig } from "./config";

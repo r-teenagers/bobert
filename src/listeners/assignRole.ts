@@ -1,0 +1,40 @@
+import { Listener } from "@sapphire/framework";
+import { Message } from "discord.js";
+
+export class AssignRoleListener extends Listener {
+	public constructor(context: Listener.Context, options: Listener.Options) {
+		super(context, {
+			...options,
+			name: "assignRole",
+			event: "messageCreate",
+		});
+	}
+
+	public async run(message: Message) {
+		if (
+			message.author.bot ||
+			!message.member ||
+			message.guildId !== this.container.config.bot.guild
+		)
+			return;
+
+		const player = await this.container.database.player.findUnique({
+			where: {
+				snowflake: message.author.id,
+			},
+		});
+
+		// if the player isn't in the db they are not actively playing
+		if (!player) return;
+
+		const prevAssignedRole = player.teamSnowflake;
+
+		if (!message.member.roles.cache.has(prevAssignedRole)) {
+			await message.member.roles.add(prevAssignedRole);
+
+			this.container.logger.warn(
+				`Found player ${message.member.displayName} without a role. Added ${prevAssignedRole}.`,
+			);
+		}
+	}
+}

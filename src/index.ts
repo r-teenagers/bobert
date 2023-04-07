@@ -11,6 +11,7 @@ const bot = new BobertClient(
 	{
 		intents: [
 			GatewayIntentBits.Guilds,
+			GatewayIntentBits.GuildMessages,
 			GatewayIntentBits.GuildMessageReactions,
 		],
 		logger: {
