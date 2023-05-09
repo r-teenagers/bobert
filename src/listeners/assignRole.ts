@@ -1,4 +1,4 @@
-import { Listener } from "@sapphire/framework";
+import { Events, Listener } from "@sapphire/framework";
 import { Message } from "discord.js";
 
 export class AssignRoleListener extends Listener {
@@ -6,11 +6,12 @@ export class AssignRoleListener extends Listener {
 		super(context, {
 			...options,
 			name: "assignRole",
-			event: "messageCreate",
+			event: Events.GuildMemberAdd,
 		});
 	}
 
 	public async run(message: Message) {
+		// we DONT FLIPPING CARE if its not in a guild
 		if (
 			message.author.bot ||
 			!message.member ||

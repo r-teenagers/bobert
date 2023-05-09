@@ -2,7 +2,7 @@ import { BobertClient } from "../lib/client";
 import { BobertItem } from "../lib/config";
 import updateEmbed from "../lib/updateEmbed";
 
-import { Listener } from "@sapphire/framework";
+import { Events, Listener } from "@sapphire/framework";
 import {
 	ChannelType,
 	Collection,
@@ -21,7 +21,7 @@ export class SendEggsListener extends Listener {
 			...options,
 			name: "sendEggs",
 			once: true,
-			event: "ready",
+			event: Events.ClientReady,
 		});
 	}
 
