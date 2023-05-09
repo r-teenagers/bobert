@@ -4,9 +4,9 @@ import updateEmbed from "../lib/updateEmbed";
 
 import { Listener } from "@sapphire/framework";
 import {
-	CategoryChannel,
 	ChannelType,
 	Collection,
+	Message,
 	MessageReaction,
 	TextChannel,
 	User,
@@ -78,6 +78,10 @@ export class SendEggsListener extends Listener {
 
 		this.container.logger.info(`Egg sent in #${channel.name} (${channel.id})!`);
 
+		/* ----------------
+			  REACTION STAGE
+			 ---------------- */
+
 		// filter is defined here because it's dynamic based on the item response
 		const reactionFilter = async (
 			reaction: MessageReaction,
@@ -86,6 +90,12 @@ export class SendEggsListener extends Listener {
 			if (user.bot) return false;
 			if (reaction.emoji.name !== item.response) return false;
 
+			// checking roles is faster than hitting the db
+			const member = reaction.message.guild?.members.cache.get(user.id);
+			if (member?.roles.cache.hasAny(...this.container.config.event.teams))
+				return true;
+
+			// okay fine we might have just not assigned the role yet
 			const prisma = this.container.database;
 			const player = await prisma.player.findUnique({
 				where: {
@@ -96,64 +106,15 @@ export class SendEggsListener extends Listener {
 			// if the player isn't in the database, they don't have a team yet
 			if (!player || player.blacklisted) return false;
 
+			// in this case, the player is in the db so we're literally so chilling
 			return true;
 		};
 
-		/* ----------------
-			  REACTION STAGE
-			 ---------------- */
-
+		// we wait for the FIRST fitting reaction ONLY
 		message
 			.awaitReactions({ filter: reactionFilter, max: 1, time: 10_000 })
 			.then(async (reactions: Collection<string, MessageReaction>) => {
-				// we don't want to clutter the channels
-				await message.delete();
-
-				// for some reason this gets called even if the time limit is reached
-				// this if statement runs if no USERS reacted (item missed)
-				if (reactions.size === 0) {
-					this.container.logger.info(
-						`${item.name} missed in #${channel.name} (${channel.id}).`,
-					);
-					return;
-				}
-
-				// by this point, we know a player got it (not a bot)
-				// the reactions cache includes the bot's reaction
-				const firstReaction = reactions.first();
-
-				if (!firstReaction) {
-					this.container.logger.error("Couldn't get first reaction!");
-					return;
-				}
-
-				const reactedByUser = firstReaction.users.cache
-					.filter((u) => !u.bot)
-					.first();
-
-				if (!reactedByUser) {
-					this.container.logger.error("Couldn't find the user who reacted!");
-					return;
-				}
-
-				this.container.logger.info(
-					`${item.name} collected by ${reactedByUser?.username}#${reactedByUser?.discriminator} in #${channel.name} (${channel.id}).`,
-				);
-
-				console.log(reactedByUser.id);
-
-				await this.container.database.player.update({
-					where: {
-						snowflake: reactedByUser.id,
-					},
-					data: {
-						score: {
-							increment: item.net_score,
-						},
-					},
-				});
-
-				await updateEmbed(client);
+				this.claimMessage(message, channel, reactions, item);
 			});
 
 		// this should generate an interval between 15 seconds and 1:15
@@ -168,6 +129,66 @@ export class SendEggsListener extends Listener {
 		);
 	}
 
+	private async claimMessage(
+		message: Message,
+		channel: TextChannel,
+		reactions: Collection<string, MessageReaction>,
+		item: BobertItem,
+	) {
+		// we don't want to clutter the channels
+		await message.delete();
+
+		// for some reason this gets called even if the time limit is reached
+		// this if statement runs if no USERS reacted (item missed)
+		if (reactions.size === 0) {
+			this.container.logger.info(
+				`${item.name} missed in #${channel.name} (${channel.id}).`,
+			);
+			return;
+		}
+
+		// by this point, we know a player got it (not a bot)
+		// the reactions cache includes the bot's reaction
+		const firstReaction = reactions.first();
+
+		if (!firstReaction) {
+			this.container.logger.error("Couldn't get first reaction!");
+			return;
+		}
+
+		const reactedByUser = firstReaction.users.cache
+			.filter((u) => !u.bot)
+			.first();
+
+		if (!reactedByUser) {
+			this.container.logger.error("Couldn't find the user who reacted!");
+			return;
+		}
+
+		this.container.logger.info(
+			`${item.name} collected by ${reactedByUser?.username}#${reactedByUser?.discriminator} in #${channel.name} (${channel.id}).`,
+		);
+
+		console.log(reactedByUser.id);
+
+		await this.container.database.player.update({
+			where: {
+				snowflake: reactedByUser.id,
+			},
+			data: {
+				score: {
+					increment: item.net_score,
+				},
+			},
+		});
+
+		await updateEmbed();
+	}
+
+	// I don't remember writing this. I am positive there is a better way.
+	// Currently, it's a super esoteric way of summing the weights then looping through
+	// until we get to the item chosen by a random number (min 0, max totalWeight)
+	// like what the FLIP was i thinking
 	private weightedRandom(items: BobertItem[]): BobertItem {
 		// gets the sum of the weight of each item
 		const totalWeight = items.reduce(

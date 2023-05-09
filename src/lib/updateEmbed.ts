@@ -1,4 +1,3 @@
-import { BobertClient } from "./client";
 import { formattedPointsString } from "./util";
 
 import { container } from "@sapphire/pieces";
@@ -11,7 +10,9 @@ import {
 	TextChannel,
 } from "discord.js";
 
-export default async (client: BobertClient) => {
+export default async () => {
+	const client = container.client;
+
 	const scoreboardChannel = (await client.channels.fetch(
 		container.config.bot.scoreboard_channel,
 	)) as TextChannel;
