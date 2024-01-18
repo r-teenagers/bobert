@@ -1,8 +1,9 @@
-import { BobertClient } from "../lib/client";
-import { BobertItem } from "../lib/config";
+import { eq } from "drizzle-orm";
+import { players } from "../../db/schema";
+import type { BobertItem } from "../lib/config";
 import updateEmbed from "../lib/updateEmbed";
 
-import { Events, Listener } from "@sapphire/framework";
+import { Events, Listener, SapphireClient } from "@sapphire/framework";
 import {
 	ChannelType,
 	Collection,
@@ -16,7 +17,10 @@ const MINUTE = 60000;
 const FIFTEEN_SECONDS = 15000;
 
 export class SendEggsListener extends Listener {
-	public constructor(context: Listener.Context, options: Listener.Options) {
+	public constructor(
+		context: Listener.LoaderContext,
+		options: Listener.Options,
+	) {
 		super(context, {
 			...options,
 			name: "sendEggs",
@@ -25,7 +29,7 @@ export class SendEggsListener extends Listener {
 		});
 	}
 
-	public run(client: BobertClient) {
+	public run(client: SapphireClient) {
 		this.container.logger.info("Client is ready! Starting to send eggs.");
 
 		const gameCategoryId = this.container.config.bot.category;
@@ -45,7 +49,7 @@ export class SendEggsListener extends Listener {
 	}
 
 	private async sendEgg(
-		client: BobertClient,
+		client: SapphireClient,
 		gameCategoryId: string,
 		blacklistedChannels: string[] | null,
 		items: BobertItem[],
@@ -96,15 +100,13 @@ export class SendEggsListener extends Listener {
 				return true;
 
 			// okay fine we might have just not assigned the role yet
-			const prisma = this.container.database;
-			const player = await prisma.player.findUnique({
-				where: {
-					snowflake: user.id,
-				},
-			});
+			const player = await this.container.database
+				.select()
+				.from(players)
+				.where(eq(players.snowflake, user.id));
 
 			// if the player isn't in the database, they don't have a team yet
-			if (!player || player.blacklisted) return false;
+			if (player.length === 0 || player[0].blacklisted) return false;
 
 			// in this case, the player is in the db so we're literally so chilling
 			return true;
@@ -171,16 +173,17 @@ export class SendEggsListener extends Listener {
 
 		console.log(reactedByUser.id);
 
-		await this.container.database.player.update({
-			where: {
-				snowflake: reactedByUser.id,
-			},
-			data: {
-				score: {
-					increment: item.net_score,
-				},
-			},
-		});
+		const [player] = await this.container.database
+			.select({ score: players.score })
+			.from(players)
+			.where(eq(players.snowflake, reactedByUser.id));
+
+		await this.container.database
+			.update(players)
+			.set({
+				score: player.score + item.net_score,
+			})
+			.where(eq(players.snowflake, reactedByUser.id));
 
 		await updateEmbed();
 	}
@@ -192,7 +195,7 @@ export class SendEggsListener extends Listener {
 	private weightedRandom(items: BobertItem[]): BobertItem {
 		// gets the sum of the weight of each item
 		const totalWeight = items.reduce(
-			(x: number, i: BobertItem) => (x += i.weight || 1),
+			(x: number, i: BobertItem) => x + (i.weight || 1),
 			0,
 		);
 

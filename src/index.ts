@@ -1,25 +1,32 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { BobertClient } from "./lib/client";
-import { LogLevel } from "@sapphire/framework";
+import { LogLevel, SapphireClient, container } from "@sapphire/framework";
 import { GatewayIntentBits } from "discord.js";
 
 import "@sapphire/plugin-logger/register";
+import { setupConfig } from "./lib/config";
 
-const bot = new BobertClient(
-	{
-		intents: [
-			GatewayIntentBits.Guilds,
-			GatewayIntentBits.GuildMessages,
-			GatewayIntentBits.GuildMessageReactions,
-		],
-		logger: {
-			level:
-				process.env.NODE_ENV === "production" ? LogLevel.Info : LogLevel.Debug,
-		},
+import { drizzle } from "drizzle-orm/bun-sqlite";
+import { migrate } from "drizzle-orm/bun-sqlite/migrator";
+import { Database } from "bun:sqlite";
+import * as schema from "../db/schema";
+
+const sqlite = new Database("bobert.db");
+container.database = drizzle(sqlite, { schema });
+
+migrate(container.database, { migrationsFolder: "drizzle" });
+
+const bot = new SapphireClient({
+	intents: [
+		GatewayIntentBits.Guilds,
+		GatewayIntentBits.GuildMessages,
+		GatewayIntentBits.GuildMessageReactions,
+	],
+	logger: {
+		level:
+			process.env.NODE_ENV === "production" ? LogLevel.Info : LogLevel.Debug,
 	},
-	"./config.toml",
-);
+});
 
-bot.login();
+setupConfig("./config.toml").then((c) => bot.login(c.bot.token));

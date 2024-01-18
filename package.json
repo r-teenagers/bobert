@@ -2,31 +2,33 @@
   "name": "bobert",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
+	"type": "module",
+  "main": "src/index.ts",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "tsc-watch --onSuccess 'node dist/index.js'",
-    "lint": "rome check src/",
-    "format": "rome format src/ --write"
+    "start": "bun src/index.ts",
+    "dev": "bun --watch src/index.ts",
+    "lint": "bunx biome check src/",
+    "format": "bunx biome format src/ --write",
+		"db:gen": "bunx drizzle-kit generate:sqlite"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^4.12.0",
-    "@sapphire/framework": "^4.2.2",
-    "@sapphire/pieces": "^3.6.1",
-    "@sapphire/plugin-logger": "^3.0.2",
-    "@types/node": "^18.15.11",
-    "discord.js": "^14.9.0",
-    "dotenv": "^16.0.3",
+    "@sapphire/framework": "^5.0.6",
+    "@sapphire/pieces": "^4.2.1",
+    "@sapphire/plugin-logger": "^4.0.1",
+    "@types/node": "^20.11.5",
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.3.1",
+    "drizzle-orm": "^0.29.3",
     "toml": "^3.0.0"
   },
   "devDependencies": {
-    "prisma": "^4.12.0",
-    "rome": "^12.0.0",
-    "tsc-watch": "^6.0.0",
-    "typescript": "^5.0.3"
+    "@biomejs/biome": "^1.5.2",
+    "@types/bun": "^1.0.2",
+    "drizzle-kit": "^0.20.13",
+    "tsc-watch": "^6.0.4",
+    "typescript": "^5.3.3"
   }
 }

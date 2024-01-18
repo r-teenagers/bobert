@@ -9,6 +9,8 @@ import {
 	Guild,
 	TextChannel,
 } from "discord.js";
+import { players, teams } from "../../db/schema";
+import { count, desc, eq, sum } from "drizzle-orm";
 
 export default async () => {
 	const client = container.client;
@@ -52,12 +54,11 @@ const generateScoreboardEmbed = async (guild: Guild): Promise<EmbedBuilder> => {
 		.setColor(0xff4500)
 		.setTitle("Event Leaderboard");
 
-	const topTenPlayers = await container.database.player.findMany({
-		take: 10,
-		orderBy: {
-			score: "desc",
-		},
-	});
+	const topTenPlayers = await container.database
+		.select()
+		.from(players)
+		.orderBy(desc(players.score))
+		.limit(10);
 
 	// open code block
 	let playerScoreboard = "```\n";
@@ -85,12 +86,13 @@ const generateScoreboardEmbed = async (guild: Guild): Promise<EmbedBuilder> => {
 	playerScoreboard += "```";
 	embed.addFields({ name: "Individual Scores", value: playerScoreboard });
 
-	const teamScore = await container.database.player.groupBy({
-		by: ["teamSnowflake"],
-		_sum: {
-			score: true,
-		},
-	});
+	const teamScore = await container.database
+		.select({
+			teamSnowflake: players.team,
+			score: sum(players.score).mapWith(Number),
+		})
+		.from(players)
+		.groupBy(players.team);
 
 	if (!teamScore) {
 		container.logger.error("Couldn't get scores from the db!");
@@ -103,7 +105,7 @@ const generateScoreboardEmbed = async (guild: Guild): Promise<EmbedBuilder> => {
 
 		const teamName = role ? role.name : team.teamSnowflake;
 
-		const teamScore = team._sum.score || 0;
+		const teamScore = team.score || 0;
 
 		embed.addFields({
 			name: teamName,
@@ -126,18 +128,23 @@ const generateTeamsEmbed = async (guild: Guild): Promise<EmbedBuilder> => {
 
 		if (!role) continue;
 
-		const team = await container.database.team.upsert({
-			where: { snowflake: teamId },
-			update: {}, // an empty update object means this will just create it
-			create: {
+		await container.database
+			.insert(teams)
+			.values({
 				snowflake: teamId,
-			},
-			include: { _count: { select: { players: true } } },
-		});
+			})
+			.onConflictDoNothing();
+
+		const [{ playerCount }] = await container.database
+			.select({
+				playerCount: count(players.snowflake),
+			})
+			.from(players)
+			.where(eq(players.team, teamId));
 
 		embed.addFields({
 			name: role.name,
-			value: `Number of players: ${team?._count.players}`,
+			value: `Number of players: ${playerCount}`,
 			inline: true,
 		});
 	}

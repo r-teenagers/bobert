@@ -1,12 +1,18 @@
 import {
 	InteractionHandler,
 	InteractionHandlerTypes,
-	PieceContext,
 } from "@sapphire/framework";
 import type { ButtonInteraction } from "discord.js";
 
+import { players, teams } from "../../db/schema";
+import { count, desc, eq } from "drizzle-orm";
+import updateEmbed from "../lib/updateEmbed";
+
 export class JoinTeamHandler extends InteractionHandler {
-	public constructor(ctx: PieceContext, options: InteractionHandler.Options) {
+	public constructor(
+		ctx: InteractionHandler.LoaderContext,
+		options: InteractionHandler.Options,
+	) {
 		super(ctx, {
 			...options,
 			interactionHandlerType: InteractionHandlerTypes.Button,
@@ -23,13 +29,12 @@ export class JoinTeamHandler extends InteractionHandler {
 		if (!interaction.guild) return;
 
 		// we don't want to run this if the user has a team already
-		const existingPlayer = await this.container.database.player.findUnique({
-			where: {
-				snowflake: interaction.user.id,
-			},
-		});
+		const existingPlayer = await this.container.database
+			.select()
+			.from(players)
+			.where(eq(players.snowflake, interaction.user.id));
 
-		if (existingPlayer) {
+		if (existingPlayer.length === 1) {
 			await interaction.reply({
 				content: "You are already on a team!",
 				ephemeral: true,
@@ -38,20 +43,21 @@ export class JoinTeamHandler extends InteractionHandler {
 		}
 
 		// find the team with the fewest members
-		const smallestTeam = await this.container.database.team.findFirst({
-			orderBy: {
-				players: {
-					_count: "asc",
-				},
-			},
-		});
+		const smallestTeam = await this.container.database
+			.select({
+				snowflake: teams.snowflake,
+			})
+			.from(teams)
+			.leftJoin(players, eq(teams.snowflake, players.team))
+			.groupBy(teams.snowflake)
+			.orderBy(desc(count(players.team)));
 
-		if (!smallestTeam) {
+		if (smallestTeam.length === 0) {
 			this.container.logger.error("Could not get smallest team!");
 			return;
 		}
 
-		const role = await interaction.guild.roles.fetch(smallestTeam.snowflake);
+		const role = await interaction.guild.roles.fetch(smallestTeam[0].snowflake);
 
 		if (!role) {
 			this.container.logger.error("Failed to fetch smallest team role!");
@@ -69,17 +75,17 @@ export class JoinTeamHandler extends InteractionHandler {
 
 		guildMember.roles.add(role);
 
-		await this.container.database.player.create({
-			data: {
-				snowflake: interaction.user.id,
-				teamSnowflake: smallestTeam.snowflake,
-				score: 0,
-			},
+		await this.container.database.insert(players).values({
+			snowflake: interaction.user.id,
+			team: smallestTeam[0].snowflake,
+			score: 0,
 		});
 
 		await interaction.reply({
 			content: `You have joined team ${role.name}. Congratulations!`,
 			ephemeral: true,
 		});
+
+		await updateEmbed();
 	}
 }
