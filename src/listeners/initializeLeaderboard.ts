@@ -1,7 +1,7 @@
-import updateEmbed from "../lib/updateEmbed";
 import { Events, Listener, SapphireClient } from "@sapphire/framework";
 import { ChannelType } from "discord.js";
 import { writeEmbedSnowflake } from "../lib/config";
+import updateEmbed from "../lib/updateEmbed";
 
 export class InitializeLeaderboardListener extends Listener {
 	public constructor(

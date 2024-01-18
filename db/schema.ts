@@ -6,8 +6,11 @@ export const teams = sqliteTable("team", {
 
 export const players = sqliteTable("player", {
 	snowflake: text("snowflake").primaryKey(),
-	team: text("team_snowflake").notNull().references(() => teams.snowflake),
+	team: text("team_snowflake")
+		.notNull()
+		.references(() => teams.snowflake),
 	score: integer("score").notNull().default(0),
-	blacklisted: integer("blacklisted", { mode: "boolean" }).notNull().default(false),
+	blacklisted: integer("blacklisted", { mode: "boolean" })
+		.notNull()
+		.default(false),
 });
-

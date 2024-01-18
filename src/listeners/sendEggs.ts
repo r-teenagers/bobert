@@ -12,9 +12,7 @@ import {
 	TextChannel,
 	User,
 } from "discord.js";
-
-const MINUTE = 60000;
-const FIFTEEN_SECONDS = 15000;
+import { formattedPointsString, titleCaseOf } from "../lib/util";
 
 export class SendEggsListener extends Listener {
 	public constructor(
@@ -73,6 +71,7 @@ export class SendEggsListener extends Listener {
 			`Selected item ${JSON.stringify(item, null, 2)}`,
 		);
 
+		const sentAt = Date.now();
 		const message = await channel.send(item.emoji);
 
 		// auto reaction should default to true!
@@ -114,13 +113,21 @@ export class SendEggsListener extends Listener {
 
 		// we wait for the FIRST fitting reaction ONLY
 		message
-			.awaitReactions({ filter: reactionFilter, max: 1, time: 10_000 })
+			.awaitReactions({
+				filter: reactionFilter,
+				max: 1,
+				time: item.collection_indow || 10_000,
+			})
 			.then(async (reactions: Collection<string, MessageReaction>) => {
-				this.claimMessage(message, channel, reactions, item);
+				this.claimMessage(message, channel, reactions, item, sentAt);
 			});
 
-		// this should generate an interval between 15 seconds and 1:15
-		const timeout = Math.random() * MINUTE + FIFTEEN_SECONDS;
+		// this should generate an interval between min and max delay
+		const timeout =
+			Math.random() *
+				((this.container.config.event.max_send_delay || 75000) -
+					(this.container.config.event.min_send_delay || 60000)) +
+			(this.container.config.event.min_send_delay || 60000);
 		this.container.logger.info(
 			`Sending next egg in ${Math.round(timeout) / 1000} seconds.`,
 		);
@@ -136,7 +143,10 @@ export class SendEggsListener extends Listener {
 		channel: TextChannel,
 		reactions: Collection<string, MessageReaction>,
 		item: BobertItem,
+		sentAt: number,
 	) {
+		const collectedAfter = Date.now() - sentAt;
+
 		// we don't want to clutter the channels
 		await message.delete();
 
@@ -171,8 +181,6 @@ export class SendEggsListener extends Listener {
 			`${item.name} collected by ${reactedByUser?.username}#${reactedByUser?.discriminator} in #${channel.name} (${channel.id}).`,
 		);
 
-		console.log(reactedByUser.id);
-
 		const [player] = await this.container.database
 			.select({ score: players.score })
 			.from(players)
@@ -185,6 +193,21 @@ export class SendEggsListener extends Listener {
 			})
 			.where(eq(players.snowflake, reactedByUser.id));
 
+		const res =
+			item.net_score >= 0
+				? `${titleCaseOf(
+						item.name,
+				  )} collected by ${reactedByUser} in ${collectedAfter}ms! They have earned ${
+						item.net_score
+				  } ${formattedPointsString(item.net_score)}.`
+				: `${titleCaseOf(
+						item.name,
+				  )} collected by ${reactedByUser} in ${collectedAfter}ms. They have lost ${-item.net_score} ${formattedPointsString(
+						item.net_score,
+				  )}`;
+
+		await message.channel.send(res);
+
 		await updateEmbed();
 	}
 
@@ -193,11 +216,10 @@ export class SendEggsListener extends Listener {
 	// until we get to the item chosen by a random number (min 0, max totalWeight)
 	// like what the FLIP was i thinking
 	private weightedRandom(items: BobertItem[]): BobertItem {
-		// gets the sum of the weight of each item
-		const totalWeight = items.reduce(
-			(x: number, i: BobertItem) => x + (i.weight || 1),
-			0,
-		);
+		let totalWeight = 0;
+		for (const item of items) {
+			totalWeight += item.weight || 1;
+		}
 
 		// i am drunk.
 		let selectionAcc = Math.ceil(Math.random() * totalWeight);

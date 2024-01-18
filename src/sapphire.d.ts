@@ -1,7 +1,7 @@
 import type { CategoryChannel, ClientOptions, Message } from "discord.js";
-import type { BobertConfig } from "./lib/config";
 import { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import { BobertClient } from "./lib/client";
+import type { BobertConfig } from "./lib/config";
 
 import * as schema from "../db/schema";
 

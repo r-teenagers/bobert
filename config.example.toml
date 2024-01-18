@@ -8,8 +8,11 @@ category = "367008542278025216"
 scoreboard_channel = "319283301334384640"
 
 [event]
- # Snowflakes of each team role for the event
+# Snowflakes of each team role for the event
 teams = [ "682428165523767422", "682428290627272725" ]
+# Time to wait to send next item (random between these two numbers)
+min_send_delay = 60000
+max_send_delay = 75000
 
 [[event.items]]
 name = "Egg"
@@ -22,6 +25,8 @@ auto_react = true
 # chance for this item to appear - forms a ratio
 # in this case, the ratio of eggs to hatched eggs is 5:1
 weight = 5
+# Period of time (ms) in which users should be allowed to collect the item (optional)
+collection_window_ms = 10000
 
 [[event.items]]
 name = "Hatched Egg"

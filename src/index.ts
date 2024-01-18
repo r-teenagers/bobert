@@ -7,9 +7,9 @@ import { GatewayIntentBits } from "discord.js";
 import "@sapphire/plugin-logger/register";
 import { setupConfig } from "./lib/config";
 
+import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import { migrate } from "drizzle-orm/bun-sqlite/migrator";
-import { Database } from "bun:sqlite";
 import * as schema from "../db/schema";
 
 const sqlite = new Database("bobert.db");

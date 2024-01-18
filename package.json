@@ -7,7 +7,8 @@
   "scripts": {
     "start": "bun src/index.ts",
     "dev": "bun --watch src/index.ts",
-    "lint": "bunx biome check src/",
+    "lint": "bunx biome check src/ db/",
+		"lint:fix": "bunx biome check src/ db/ --apply",
     "format": "bunx biome format src/ --write",
 		"db:gen": "bunx drizzle-kit generate:sqlite"
   },

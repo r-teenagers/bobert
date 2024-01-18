@@ -1,5 +1,5 @@
-import { container } from "@sapphire/pieces";
 import { appendFileSync } from "fs";
+import { container } from "@sapphire/pieces";
 import * as toml from "toml";
 
 export type BobertConfig = {
@@ -16,6 +16,8 @@ export type BobertConfig = {
 	event: {
 		teams: string[];
 		items: BobertItem[];
+		min_send_delay: number | null;
+		max_send_delay: number | null;
 	};
 };
 
@@ -26,6 +28,7 @@ export type BobertItem = {
 	net_score: number;
 	auto_react: boolean | null;
 	weight: number | null;
+	collection_indow: number | null;
 };
 
 const isBlankOrUndefined = (property: string | null): boolean =>

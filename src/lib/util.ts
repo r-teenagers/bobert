@@ -4,3 +4,9 @@ export const formattedPointsString = (points: number): string => {
 
 	return "Points";
 };
+
+export function titleCaseOf(name: string): string {
+	return name.replace(/\w\S*/g, (txt) => {
+		return txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase();
+	});
+}

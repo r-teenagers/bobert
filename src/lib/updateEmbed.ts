@@ -9,8 +9,8 @@ import {
 	Guild,
 	TextChannel,
 } from "discord.js";
-import { players, teams } from "../../db/schema";
 import { count, desc, eq, sum } from "drizzle-orm";
+import { players, teams } from "../../db/schema";
 
 export default async () => {
 	const client = container.client;
