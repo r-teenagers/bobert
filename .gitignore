@@ -9,3 +9,4 @@ config.toml
 
 */*.db
 */*.db-journal
+bobert.db

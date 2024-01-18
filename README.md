@@ -2,48 +2,14 @@
 
 This is a very very simple bot that spams eggs. First one to react to an egg it has sent gets one point. Simple enough.
 
-### Development:
-Run `pipenv install` to install all dependencies from the Pipfile to a virtual environment.
-Then run `pipenv run python main.py` to run the bot or `pipenv shell` to enter the virtual environment.
+### Running:
+Run `bun install` to install all dependencies.
+Copy the contents of `config.example.toml` to `config.toml` and fill in the values.
+Run `bun start` to run, or `bun dev` to watch for changes. A SQLite database for scoring will be created in the project directory.
 
 ### Configuration:
 
-You must have a `.env` file in the root directory. Its format is:
+You must have a `config.toml` file in the root directory. Its format is given in `config.example.toml`.
 
-```dotenv
-TOKEN=
-CATEGORY_ID=
-GUILD_ID=
-AUTHORIZED_USER=
-MOD_CHANNEL=
-TIMEZONE=
-```
-
-Where everything should be ids. For example, CATEGORY_ID=12083246426462 or whatever the id is. Except for token of course.
-`TIMEZONE` must be a valid timezone. For example, `America/New_York` or `Europe/Paris`. You can find a list of valid timezones [here](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
-
-`config.json` stores all relevant message ids and all that fun stuff. Its structure is:
-
-```json
-{
-  "set": false,
-  "teams": [1, 2, 3],
-  "blacklisted_users": [0],
-  "scoreboard_message": {
-    "channel_id": "message_id"
-  },
-  "react_role_message": {
-    "channel_id": "message_id"
-  }
-}
-```
-
-Where teams is a list of integers. Those integers _must_ be valid role ids. Don't touch set.
-Blacklisted users is a list of ids you can modify with `<prefix>blacklist [user id]`.
-
-Use the set command to set the teams with their IDs. after team IDs are set, run `<prefix>initialize [channel]`
-somewhere. The bot will then send the scoreboard and role messages in the channel and save them.
-
-Smart, I know.
-
-I tried to comment my code but good luck if you're gonna explore it.
+The first time the bot is run, it will send the embeds in the server and channel given in `config.toml`.
+It will autofill some properties in the config file. **DO NOT CHANGE THEM UNLESS YOU KNOW WHAT YOU'RE DOING.**
