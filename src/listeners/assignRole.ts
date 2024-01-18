@@ -2,7 +2,7 @@ import { Events, Listener } from "@sapphire/framework";
 import { Message } from "discord.js";
 
 import { eq } from "drizzle-orm";
-import { players } from "../../db/schema";
+import { players } from "@/schema";
 
 export class AssignRoleListener extends Listener {
 	public constructor(

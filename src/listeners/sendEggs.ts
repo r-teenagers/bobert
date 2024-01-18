@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { players } from "../../db/schema";
+import { players } from "@/schema";
 import type { BobertItem } from "../lib/config";
 import updateEmbed from "../lib/updateEmbed";
 

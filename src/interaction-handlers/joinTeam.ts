@@ -5,7 +5,7 @@ import {
 import type { ButtonInteraction } from "discord.js";
 
 import { count, desc, eq } from "drizzle-orm";
-import { players, teams } from "../../db/schema";
+import { players, teams } from "@/schema";
 import updateEmbed from "../lib/updateEmbed";
 
 export class JoinTeamHandler extends InteractionHandler {

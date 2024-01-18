@@ -10,7 +10,7 @@ import {
 	TextChannel,
 } from "discord.js";
 import { count, desc, eq, sum } from "drizzle-orm";
-import { players, teams } from "../../db/schema";
+import { players, teams } from "@/schema";
 
 export default async () => {
 	const client = container.client;

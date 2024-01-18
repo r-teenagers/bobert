@@ -3,7 +3,7 @@ import { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import { BobertClient } from "./lib/client";
 import type { BobertConfig } from "./lib/config";
 
-import * as schema from "../db/schema";
+import * as schema from "@/schema";
 
 declare module "@sapphire/pieces" {
 	interface Container {

@@ -23,6 +23,10 @@
 
     // Some stricter flags
     "useUnknownInCatchVariables": true,
-    "noPropertyAccessFromIndexSignature": true
+    "noPropertyAccessFromIndexSignature": true,
+
+		"paths": {
+			"@/*": ["./db/*"]
+		}
   }
 }
