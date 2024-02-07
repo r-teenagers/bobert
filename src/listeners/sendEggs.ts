@@ -71,7 +71,6 @@ export class SendEggsListener extends Listener {
 			`Selected item ${JSON.stringify(item, null, 2)}`,
 		);
 
-		const sentAt = Date.now();
 		const message = await channel.send(item.emoji);
 
 		// auto reaction should default to true!
@@ -79,6 +78,7 @@ export class SendEggsListener extends Listener {
 			message.react(item.response);
 		}
 
+		const sentAt = Date.now();
 		this.container.logger.info(`Egg sent in #${channel.name} (${channel.id})!`);
 
 		/* ----------------
@@ -147,9 +147,6 @@ export class SendEggsListener extends Listener {
 	) {
 		const collectedAfter = Date.now() - sentAt;
 
-		// we don't want to clutter the channels
-		await message.delete();
-
 		// for some reason this gets called even if the time limit is reached
 		// this if statement runs if no USERS reacted (item missed)
 		if (reactions.size === 0) {
@@ -206,7 +203,11 @@ export class SendEggsListener extends Listener {
 						item.net_score,
 				  )}`;
 
-		await message.channel.send(res);
+		const collectedMesssage = await message.channel.send(res);
+		setTimeout(async () => {
+			await collectedMesssage.delete();
+			await message.delete();
+		}, 2000);
 
 		await updateEmbed();
 	}

@@ -22,11 +22,16 @@ const bot = new SapphireClient({
 		GatewayIntentBits.Guilds,
 		GatewayIntentBits.GuildMessages,
 		GatewayIntentBits.GuildMessageReactions,
+		GatewayIntentBits.MessageContent,
 	],
+	defaultPrefix: "b!",
+	loadMessageCommandListeners: true,
 	logger: {
 		level:
 			process.env.NODE_ENV === "production" ? LogLevel.Info : LogLevel.Debug,
 	},
 });
+
+container.processStartedAt = Math.floor(Date.now() / 1000);
 
 setupConfig("./config.toml").then((c) => bot.login(c.bot.token));

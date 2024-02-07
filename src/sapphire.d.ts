@@ -10,6 +10,7 @@ declare module "@sapphire/pieces" {
 		category_cache: CategoryChannel;
 		config: BobertConfig;
 		database: BunSQLiteDatabase<typeof schema>;
+		processStartedAt: number;
 		scoreboard_message_cache: Message;
 	}
 }
