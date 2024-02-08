@@ -105,7 +105,10 @@ export class SendEggsListener extends Listener {
 				.where(eq(players.snowflake, user.id));
 
 			// if the player isn't in the database, they don't have a team yet
-			if (!player || player.blacklisted) return false;
+			if (!player || player.blacklisted) {
+				await reaction.remove();
+				return false;
+			}
 
 			// in this case, the player is in the db so we're literally so chilling
 			return true;
