@@ -86,32 +86,16 @@ export class SendEggsListener extends Listener {
 			 ---------------- */
 
 		// filter is defined here because it's dynamic based on the item response
-		const reactionFilter = async (
-			reaction: MessageReaction,
-			user: User,
-		): Promise<boolean> => {
-			if (user.bot) return false;
-			if (reaction.emoji.name !== item.response) return false;
-
-			// checking roles is faster than hitting the db
+		const reactionFilter = (reaction: MessageReaction, user: User): boolean => {
 			const member = reaction.message.guild?.members.cache.get(user.id);
-			if (member?.roles.cache.hasAny(...this.container.config.event.teams))
+			if (
+				!user.bot &&
+				reaction.emoji.name === item.response &&
+				member?.roles.cache.hasAny(...this.container.config.event.teams)
+			)
 				return true;
 
-			// okay fine we might have just not assigned the role yet
-			const [player] = await this.container.database
-				.select()
-				.from(players)
-				.where(eq(players.snowflake, user.id));
-
-			// if the player isn't in the database, they don't have a team yet
-			if (!player || player.blacklisted) {
-				await reaction.remove();
-				return false;
-			}
-
-			// in this case, the player is in the db so we're literally so chilling
-			return true;
+			return false;
 		};
 
 		// we wait for the FIRST fitting reaction ONLY
@@ -122,7 +106,7 @@ export class SendEggsListener extends Listener {
 				time: item.collection_indow || 10_000,
 			})
 			.then(async (reactions: Collection<string, MessageReaction>) => {
-				this.claimMessage(message, channel, reactions, item, sentAt);
+				await this.claimMessage(message, channel, reactions, item, sentAt);
 			});
 
 		// this should generate an interval between min and max delay
@@ -169,9 +153,7 @@ export class SendEggsListener extends Listener {
 			return;
 		}
 
-		const reactedByUser = firstReaction.users.cache
-			.filter((u) => !u.bot)
-			.first();
+		const reactedByUser = firstReaction.users.cache.first();
 
 		if (!reactedByUser) {
 			this.container.logger.error("Couldn't find the user who reacted!");
@@ -186,6 +168,12 @@ export class SendEggsListener extends Listener {
 			.select({ score: players.score })
 			.from(players)
 			.where(eq(players.snowflake, reactedByUser.id));
+
+		if (!player) {
+			// somehow user isn't in db!!
+			await message.delete();
+			return;
+		}
 
 		await this.container.database
 			.update(players)
