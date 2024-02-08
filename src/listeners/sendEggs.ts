@@ -99,13 +99,13 @@ export class SendEggsListener extends Listener {
 				return true;
 
 			// okay fine we might have just not assigned the role yet
-			const player = await this.container.database
+			const [player] = await this.container.database
 				.select()
 				.from(players)
 				.where(eq(players.snowflake, user.id));
 
 			// if the player isn't in the database, they don't have a team yet
-			if (player.length === 0 || player[0].blacklisted) return false;
+			if (!player || player.blacklisted) return false;
 
 			// in this case, the player is in the db so we're literally so chilling
 			return true;
