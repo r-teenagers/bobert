@@ -103,7 +103,7 @@ export class SendEggsListener extends Listener {
 		message
 			.awaitReactions({
 				filter: reactionFilter,
-				max: 1,
+				maxUsers: 1,
 				time: item.collection_indow || 10_000,
 			})
 			.then(async (reactions: Collection<string, MessageReaction>) => {
@@ -154,7 +154,7 @@ export class SendEggsListener extends Listener {
 			return;
 		}
 
-		const reactedByUser = firstReaction.users.cache.first();
+		const reactedByUser = firstReaction.users.cache.filter(r => !r.bot).first();
 
 		if (!reactedByUser) {
 			this.container.logger.error("Couldn't find the user who reacted!");
