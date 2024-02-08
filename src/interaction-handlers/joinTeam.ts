@@ -5,7 +5,7 @@ import {
 import type { ButtonInteraction } from "discord.js";
 
 import { players, teams } from "@/schema";
-import { count, desc, eq } from "drizzle-orm";
+import { asc, count, eq } from "drizzle-orm";
 import updateEmbed from "../lib/updateEmbed";
 
 export class JoinTeamHandler extends InteractionHandler {
@@ -50,7 +50,7 @@ export class JoinTeamHandler extends InteractionHandler {
 			.from(teams)
 			.leftJoin(players, eq(teams.snowflake, players.team))
 			.groupBy(teams.snowflake)
-			.orderBy(desc(count(players.team)));
+			.orderBy(asc(count(players.team)));
 
 		if (smallestTeam.length === 0) {
 			this.container.logger.error("Could not get smallest team!");
