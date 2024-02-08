@@ -1,5 +1,5 @@
 import { Command } from "@sapphire/framework";
-import { PermissionFlagsBits, type Message } from "discord.js";
+import { type Message, PermissionFlagsBits } from "discord.js";
 
 export default class PingCommand extends Command {
 	public constructor(context: Command.LoaderContext, options: Command.Options) {

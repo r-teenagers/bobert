@@ -1,5 +1,6 @@
 import { formattedPointsString } from "./util";
 
+import { players, teams } from "@/schema";
 import { container } from "@sapphire/pieces";
 import {
 	ActionRowBuilder,
@@ -9,8 +10,7 @@ import {
 	Guild,
 	TextChannel,
 } from "discord.js";
-import { count, desc, eq, sum } from "drizzle-orm";
-import { players, teams } from "@/schema";
+import { count, desc, eq, gt, sum } from "drizzle-orm";
 
 export default async () => {
 	const client = container.client;
@@ -90,6 +90,7 @@ const generateScoreboardEmbed = async (guild: Guild): Promise<EmbedBuilder> => {
 			score: sum(players.score).mapWith(Number),
 		})
 		.from(players)
+		.where(gt(players.score, 0))
 		.groupBy(players.team);
 
 	if (!teamScore) {

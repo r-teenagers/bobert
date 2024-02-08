@@ -4,8 +4,8 @@ import {
 } from "@sapphire/framework";
 import type { ButtonInteraction } from "discord.js";
 
-import { count, desc, eq } from "drizzle-orm";
 import { players, teams } from "@/schema";
+import { count, desc, eq } from "drizzle-orm";
 import updateEmbed from "../lib/updateEmbed";
 
 export class JoinTeamHandler extends InteractionHandler {
