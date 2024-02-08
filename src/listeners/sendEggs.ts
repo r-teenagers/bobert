@@ -153,6 +153,7 @@ export class SendEggsListener extends Listener {
 			this.container.logger.info(
 				`${item.name} missed in #${channel.name} (${channel.id}).`,
 			);
+			await message.delete();
 			return;
 		}
 
