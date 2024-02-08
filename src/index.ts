@@ -1,6 +1,3 @@
-import * as dotenv from "dotenv";
-dotenv.config();
-
 import { LogLevel, SapphireClient, container } from "@sapphire/framework";
 import { GatewayIntentBits } from "discord.js";
 
@@ -28,7 +25,7 @@ const bot = new SapphireClient({
 	loadMessageCommandListeners: true,
 	logger: {
 		level:
-			process.env.NODE_ENV === "production" ? LogLevel.Info : LogLevel.Debug,
+			process.env.NODE_ENV !== "development" ? LogLevel.Info : LogLevel.Debug,
 	},
 });
 
