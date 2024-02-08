@@ -87,9 +87,10 @@ export class SendEggsListener extends Listener {
 
 		// filter is defined here because it's dynamic based on the item response
 		const reactionFilter = (reaction: MessageReaction, user: User): boolean => {
+			if (user.bot) return false;
+
 			const member = reaction.message.guild?.members.cache.get(user.id);
 			if (
-				!user.bot &&
 				reaction.emoji.name === item.response &&
 				member?.roles.cache.hasAny(...this.container.config.event.teams)
 			)
