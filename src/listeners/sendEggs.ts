@@ -71,7 +71,7 @@ export class SendEggsListener extends Listener {
 			`Selected item ${JSON.stringify(item, null, 2)}`,
 		);
 
-		const message = await channel.send(item.emoji);
+		const message = await channel.send(item.emoji + "DONATE TO THE TREVOR PROJECT:\n <https://tiltify.com/@rteenagers/rteenagers-for-lgbtq-youth>");
 
 		// auto reaction should default to true!
 		if (item.auto_react !== false) {
