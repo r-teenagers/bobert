@@ -1,6 +1,6 @@
 import { appendFileSync } from "fs";
 import { container } from "@sapphire/pieces";
-import * as config from "../../config.toml";
+import * as toml from "toml";
 
 export type BobertConfig = {
 	bot: {
@@ -35,7 +35,9 @@ export type BobertItem = {
 const isBlankOrUndefined = (property: string | null): boolean =>
 	!property || property === "";
 
-export async function setupConfig(): Promise<BobertConfig> {
+	export async function setupConfig(configPath: string): Promise<BobertConfig> {
+	const configToml = Bun.file(configPath);
+	const config = toml.parse(await configToml.text());
 	console.log(JSON.stringify(config, null, 2));
 
 	if (isBlankOrUndefined(config.bot.token)) {
