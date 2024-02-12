@@ -64,7 +64,7 @@ const generateScoreboardEmbed = async (guild: Guild): Promise<EmbedBuilder> => {
 	let playerScoreboard = "```py\n";
 
 	for (const [index, player] of topTenPlayers.entries()) {
-		const member = await guild.members.fetch(player.snowflake);
+		const member = await guild.members.fetch(player.snowflake).catch(() => undefined);
 		const memberName = member ? member.displayName : player.snowflake;
 
 		// parseInt will remove leading zeroes
