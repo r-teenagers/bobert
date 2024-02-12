@@ -10,7 +10,7 @@ import {
 	Guild,
 	TextChannel,
 } from "discord.js";
-import { count, desc, eq, gt, sum } from "drizzle-orm";
+import { count, desc, and, eq, gt, sum } from "drizzle-orm";
 
 export default async () => {
 	const client = container.client;
@@ -57,6 +57,7 @@ const generateScoreboardEmbed = async (guild: Guild): Promise<EmbedBuilder> => {
 	const topTenPlayers = await container.database
 		.select()
 		.from(players)
+		.where(eq(players.blacklisted, false))
 		.orderBy(desc(players.score))
 		.limit(10);
 
@@ -90,7 +91,7 @@ const generateScoreboardEmbed = async (guild: Guild): Promise<EmbedBuilder> => {
 			score: sum(players.score).mapWith(Number),
 		})
 		.from(players)
-		.where(gt(players.score, 0))
+		.where(and(gt(players.score, 0), eq(players.blacklisted, false)))
 		.groupBy(players.team);
 
 	if (!teamScore) {
