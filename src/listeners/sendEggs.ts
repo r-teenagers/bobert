@@ -154,7 +154,9 @@ export class SendEggsListener extends Listener {
 			return;
 		}
 
-		const reactedByUser = firstReaction.users.cache.filter(r => !r.bot).first();
+		const reactedByUser = firstReaction.users.cache
+			.filter((r) => !r.bot)
+			.first();
 
 		if (!reactedByUser) {
 			this.container.logger.error("Couldn't find the user who reacted!");
@@ -164,6 +166,15 @@ export class SendEggsListener extends Listener {
 		this.container.logger.info(
 			`${item.name} collected by ${reactedByUser?.username}#${reactedByUser?.discriminator} in #${channel.name} (${channel.id}).`,
 		);
+
+		const logChannel = (await this.container.client.channels.fetch(
+			this.container.config.bot.log_channel,
+		)) as TextChannel;
+		logChannel
+			.send(
+				`${item.name} collected by ${reactedByUser} in #${channel.name} (${collectedAfter}ms).`,
+			)
+			.catch(() => {});
 
 		const [player] = await this.container.database
 			.select({ score: players.score })

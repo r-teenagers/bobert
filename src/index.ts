@@ -31,4 +31,4 @@ const bot = new SapphireClient({
 
 container.processStartedAt = Math.floor(Date.now() / 1000);
 
-setupConfig("./config.toml").then((c) => bot.login(c.bot.token));
+setupConfig().then((c) => bot.login(c.bot.token));
