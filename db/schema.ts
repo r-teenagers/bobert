@@ -13,4 +13,5 @@ export const players = sqliteTable("player", {
 	blacklisted: integer("blacklisted", { mode: "boolean" })
 		.notNull()
 		.default(false),
+	excludedFromScore: integer("excluded", { mode: "boolean" }),
 });

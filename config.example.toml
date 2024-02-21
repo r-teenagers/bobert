@@ -8,6 +8,8 @@ category = "367008542278025216"
 scoreboard_channel = "319283301334384640"
 
 [event]
+# defaults to true - determines if eggs should be sent
+active = true
 # Snowflakes of each team role for the event
 teams = [ "682428165523767422", "682428290627272725" ]
 # Time to wait to send next item (random between these two numbers)

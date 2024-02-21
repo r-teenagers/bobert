@@ -57,7 +57,9 @@ const generateScoreboardEmbed = async (guild: Guild): Promise<EmbedBuilder> => {
 	const topTenPlayers = await container.database
 		.select()
 		.from(players)
-		.where(eq(players.blacklisted, false))
+		.where(
+			and(eq(players.blacklisted, false), eq(players.excludedFromScore, false)),
+		)
 		.orderBy(desc(players.score))
 		.limit(10);
 
@@ -65,7 +67,9 @@ const generateScoreboardEmbed = async (guild: Guild): Promise<EmbedBuilder> => {
 	let playerScoreboard = "```py\n";
 
 	for (const [index, player] of topTenPlayers.entries()) {
-		const member = await guild.members.fetch(player.snowflake).catch(() => undefined);
+		const member = await guild.members
+			.fetch(player.snowflake)
+			.catch(() => undefined);
 		const memberName = member ? member.displayName : player.snowflake;
 
 		// parseInt will remove leading zeroes
@@ -91,7 +95,13 @@ const generateScoreboardEmbed = async (guild: Guild): Promise<EmbedBuilder> => {
 			score: sum(players.score).mapWith(Number),
 		})
 		.from(players)
-		.where(and(gt(players.score, 0), eq(players.blacklisted, false)))
+		.where(
+			and(
+				gt(players.score, 0),
+				eq(players.blacklisted, false),
+				eq(players.excludedFromScore, false),
+			),
+		)
 		.groupBy(players.team);
 
 	if (!teamScore) {

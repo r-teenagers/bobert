@@ -15,6 +15,7 @@ export type BobertConfig = {
 		} | null;
 	};
 	event: {
+		active: boolean | null;
 		teams: string[];
 		items: BobertItem[];
 		min_send_delay: number | null;
@@ -35,7 +36,7 @@ export type BobertItem = {
 const isBlankOrUndefined = (property: string | null): boolean =>
 	!property || property === "";
 
-	export async function setupConfig(configPath: string): Promise<BobertConfig> {
+export async function setupConfig(configPath: string): Promise<BobertConfig> {
 	const configToml = Bun.file(configPath);
 	const config = toml.parse(await configToml.text());
 	console.log(JSON.stringify(config, null, 2));

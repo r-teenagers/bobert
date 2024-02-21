@@ -52,6 +52,11 @@ export class SendEggsListener extends Listener {
 		blacklistedChannels: string[] | null,
 		items: BobertItem[],
 	) {
+		if (this.container.config.event.active === false) {
+			this.container.logger.info("Active has been set to false, stopping.");
+			return;
+		}
+
 		// The selected channel needs to be a TextChannel that is NOT blacklisted
 		// it would probably work in voice text etc., but it's easier this way
 		const channel: TextChannel = client.channels.cache
@@ -75,7 +80,7 @@ export class SendEggsListener extends Listener {
 
 		// auto reaction should default to true!
 		if (item.auto_react !== false) {
-			message.react(item.response);
+			message.react(item.response).catch(() => {});
 		}
 
 		const sentAt = Date.now();
