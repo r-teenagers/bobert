@@ -10,3 +10,5 @@ config.toml
 */*.db
 */*.db-journal
 bobert.db
+
+scores.json
