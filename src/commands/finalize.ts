@@ -1,7 +1,7 @@
 import { players } from "@/schema";
 import { Command } from "@sapphire/framework";
 import { PermissionFlagsBits, type Message } from "discord.js";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import updateEmbed from "../lib/updateEmbed";
 
 export class FinalizeCommand extends Command {
@@ -41,8 +41,10 @@ export class FinalizeCommand extends Command {
 		);
 
 		for (const player of allPlayers) {
-			const isInServer =
-				await (message.guild!.members.fetch(player.snowflake).then(() => true).catch(() => false));
+			const isInServer = await message
+				.guild!.members.fetch(player.snowflake)
+				.then(() => true)
+				.catch(() => false);
 
 			// temp value, will be cleared after event is finalized so the scores can be used again later!!
 			await this.container.database
@@ -70,9 +72,17 @@ export class FinalizeCommand extends Command {
 		await progressMessage.edit("Done.");
 
 		// generate scores.json
-		const activePlayers = allPlayers
-			.filter((p) => !p.blacklisted && !p.excludedFromScore)
-			.map((p) => ({ snowflake: p.snowflake, team: p.team, score: p.score }));
+		const activePlayers = (
+			await this.container.database
+				.select()
+				.from(players)
+				.where(
+					and(
+						eq(players.blacklisted, false),
+						eq(players.excludedFromScore, false),
+					),
+				)
+		).map((p) => ({ snowflake: p.snowflake, team: p.team, score: p.score }));
 
 		await Bun.write("./scores.json", JSON.stringify(activePlayers, null, 2));
 
