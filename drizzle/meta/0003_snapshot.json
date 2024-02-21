@@ -1,0 +1,91 @@
+{
+  "version": "5",
+  "dialect": "sqlite",
+  "id": "9b6257bc-00d5-46d9-8faa-54a2f4d1e9a1",
+  "prevId": "e66c624e-cce9-47e4-a11e-2098ee9973d6",
+  "tables": {
+    "player": {
+      "name": "player",
+      "columns": {
+        "snowflake": {
+          "name": "snowflake",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "team_snowflake": {
+          "name": "team_snowflake",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "score": {
+          "name": "score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "blacklisted": {
+          "name": "blacklisted",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "excluded": {
+          "name": "excluded",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "player_team_snowflake_team_snowflake_fk": {
+          "name": "player_team_snowflake_team_snowflake_fk",
+          "tableFrom": "player",
+          "tableTo": "team",
+          "columnsFrom": [
+            "team_snowflake"
+          ],
+          "columnsTo": [
+            "snowflake"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "team": {
+      "name": "team",
+      "columns": {
+        "snowflake": {
+          "name": "snowflake",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  }
+}

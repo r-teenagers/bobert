@@ -76,7 +76,7 @@ export class ScoreCommand extends Command {
 
 		await this.container.database
 			.update(players)
-			.set({ excludedFromScore: null });
+			.set({ excludedFromScore: false });
 
 		this.container.config.event.active = false;
 	}

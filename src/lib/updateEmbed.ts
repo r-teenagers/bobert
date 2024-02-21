@@ -10,7 +10,7 @@ import {
 	Guild,
 	TextChannel,
 } from "discord.js";
-import { count, desc, and, eq, gt, sum } from "drizzle-orm";
+import { count, desc, and, eq, gt, sum, not } from "drizzle-orm";
 
 export default async () => {
 	const client = container.client;
