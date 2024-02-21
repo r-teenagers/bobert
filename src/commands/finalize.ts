@@ -42,7 +42,7 @@ export class FinalizeCommand extends Command {
 
 		for (const player of allPlayers) {
 			const isInServer =
-				(await message.guild!.members.fetch(player.snowflake)) !== null;
+				(await message.guild!.members.fetch(player.snowflake).catch(() => null)) !== null;
 
 			// temp value, will be cleared after event is finalized so the scores can be used again later!!
 			await this.container.database
