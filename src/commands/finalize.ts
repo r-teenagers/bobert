@@ -42,18 +42,20 @@ export class FinalizeCommand extends Command {
 
 		for (const player of allPlayers) {
 			const isInServer =
-				(await message.guild!.members.fetch(player.snowflake).catch(() => null)) !== null;
+				await (message.guild!.members.fetch(player.snowflake).then(() => true).catch(() => false));
 
 			// temp value, will be cleared after event is finalized so the scores can be used again later!!
 			await this.container.database
 				.update(players)
 				.set({
-					excludedFromScore: isInServer,
+					excludedFromScore: !isInServer,
 				})
 				.where(eq(players.snowflake, player.snowflake));
 
 			if (isInServer) accepted += 1;
 			else rejected += 1;
+
+			await Bun.sleep(150);
 		}
 
 		this.container.logger.info(
