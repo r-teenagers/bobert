@@ -1,6 +1,6 @@
 import { players } from "@/schema";
 import { Command } from "@sapphire/framework";
-import type { Message } from "discord.js";
+import { PermissionFlagsBits, type Message } from "discord.js";
 import { eq } from "drizzle-orm";
 import updateEmbed from "../lib/updateEmbed";
 
@@ -14,6 +14,8 @@ export class ScoreCommand extends Command {
 
 	public async messageRun(message: Message) {
 		if (message.guild?.id !== this.container.config.bot.guild) return;
+		if (!message.member?.permissions.has(PermissionFlagsBits.ModerateMembers))
+			return;
 
 		this.container.logger.info("Finalizing event.");
 
