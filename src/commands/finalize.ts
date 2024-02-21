@@ -4,11 +4,11 @@ import { PermissionFlagsBits, type Message } from "discord.js";
 import { eq } from "drizzle-orm";
 import updateEmbed from "../lib/updateEmbed";
 
-export class ScoreCommand extends Command {
+export class FinalizeCommand extends Command {
 	public constructor(context: Command.LoaderContext, options: Command.Options) {
 		super(context, {
 			...options,
-			name: "score",
+			name: "finalize",
 		});
 	}
 
